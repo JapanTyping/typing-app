@@ -26,8 +26,19 @@
     <textarea id="input" class="input" placeholder="ここに入力してください..." disabled></textarea>
     <div id="result" class="result"></div>
     <button id="startBtn">テスト開始</button>
+
+    <h2>履歴</h2>
+    <table id="historyTable">
+      <thead><tr><th>日時</th><th>WPM</th><th>正確さ%</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button id="clearBtn">履歴をクリア</button>
+
+    <h2>推移グラフ</h2>
+    <canvas id="trend" height="120"></canvas>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
