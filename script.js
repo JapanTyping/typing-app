@@ -1,5 +1,5 @@
 
-    const prompts = [
+const prompts = [
   "パソコンでのタイピングが速くなると、メール作成や資料作りにかかる時間が大幅に短縮されるため、仕事の効率が向上し、余った時間を学習や趣味に充てることができます。",
   "日本の四季折々の風景は美しく、特に春の桜並木や秋の紅葉は多くの観光客を魅了しますが、地元の人々にとっては幼い頃から馴染みのある心温まる原風景でもあります。",
   "新しい言語を学習するとき、毎日少しずつ継続的に練習することが最も効果的であり、短期間に詰め込むよりも長期的に記憶が定着しやすくなると言われています。",
@@ -22,100 +22,108 @@
   "公共交通機関で席を譲るときは、相手が遠慮しないよう自然な声かけと笑顔を添えることで、心温まるやり取りになり、周囲にも良い雰囲気が広がります。"
 ];
 
-    const promptEl   = document.getElementById('prompt');
-    const countdownEl= document.getElementById('countdown');
-    const timerEl    = document.getElementById('timer');
-    const inputEl    = document.getElementById('input');
-    const resultEl   = document.getElementById('result');
-    const startBtn   = document.getElementById('startBtn');
-    const timeSelect = document.getElementById('timeSelect');
+const promptEl   = document.getElementById('prompt');
+const countdownEl= document.getElementById('countdown');
+const timerEl    = document.getElementById('timer');
+const inputEl    = document.getElementById('input');
+const resultEl   = document.getElementById('result');
+const startBtn   = document.getElementById('startBtn');
+const timeSelect = document.getElementById('timeSelect');
 
-    let countdownInterval;
-    let timerInterval;
-    let startTime   = 0;
-    let limitSeconds= 60;
+let countdownInterval;
+let timerInterval;
+let startTime   = 0;
+let limitSeconds= 60;
+let onInputHandler = null;
 
-    function startTest(){
-      // 初期化
-      resultEl.textContent = '';
-      inputEl.value = '';
-      inputEl.disabled = true;
-      timerEl.textContent = '';
-      countdownEl.textContent = '';
+function startTest(){
+  // 初期化
+  resultEl.textContent = '';
+  inputEl.value = '';
+  inputEl.disabled = true;
+  timerEl.textContent = '';
+  countdownEl.textContent = '';
 
-      // タイマー設定
-      limitSeconds = parseInt(timeSelect.value,10);
+  // タイマー設定
+  limitSeconds = parseInt(timeSelect.value,10);
 
-      // ランダムにお題をセット
-      const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-      promptEl.textContent = prompt;
+  // ランダムにお題をセット
+  const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+  promptEl.textContent = prompt;
 
-      // 3秒カウントダウン
-      let count = 3;
+  // 3秒カウントダウン
+  let count = 3;
+  countdownEl.textContent = count;
+  countdownInterval = setInterval(()=>{
+    count--;
+    if(count > 0){
       countdownEl.textContent = count;
-      countdownInterval = setInterval(()=>{
-        count--;
-        if(count > 0){
-          countdownEl.textContent = count;
-        }else{
-          clearInterval(countdownInterval);
-          countdownEl.textContent = 'スタート!';
-          beginTyping(prompt);
-        }
-      },1000);
+    }else{
+      clearInterval(countdownInterval);
+      countdownEl.textContent = 'スタート!';
+      beginTyping(prompt);
     }
+  },1000);
+}
 
-    function beginTyping(prompt){
-      inputEl.disabled = false;
-      inputEl.focus();
-      startTime = Date.now();
+function beginTyping(prompt){
+  inputEl.disabled = false;
+  inputEl.focus();
+  startTime = Date.now();
 
-      let secondsLeft = limitSeconds;
+  let secondsLeft = limitSeconds;
+  timerEl.textContent = `残り ${secondsLeft} 秒`;
+  timerInterval = setInterval(()=>{
+    secondsLeft--;
+    if(secondsLeft > 0){
       timerEl.textContent = `残り ${secondsLeft} 秒`;
-      timerInterval = setInterval(()=>{
-        secondsLeft--;
-        if(secondsLeft > 0){
-          timerEl.textContent = `残り ${secondsLeft} 秒`;
-        }else{
-          clearInterval(timerInterval);
-          finishTest(prompt);
-        }
-      },1000);
-
-      // 入力が完了したら自動終了
-      inputEl.addEventListener('input', ()=> {
-        if(inputEl.value.length >= prompt.length){
-          clearInterval(timerInterval);
-          finishTest(prompt);
-        }
-      }, { once: true });
+    }else{
+      clearInterval(timerInterval);
+      finishTest(prompt);
     }
+  },1000);
 
-    function finishTest(prompt){
-      inputEl.disabled = true;
-      timerEl.textContent = '終了';
-      countdownEl.textContent = '';
-
-      const typed = inputEl.value;
-      const correctChars = getCorrectCharCount(prompt, typed);
-      const elapsedSec = (Date.now() - startTime) / 1000;
-      const accuracy = prompt.length ? (correctChars / prompt.length * 100).toFixed(1) : 0;
-      const wpm = (elapsedSec > 0) ? ((correctChars / 5) / (elapsedSec / 60)).toFixed(1) : 0;
-
-      resultEl.innerHTML = `正確さ: ${accuracy}% | WPM: ${wpm}`;
-      startBtn.disabled = false;
+  // 入力が完了したら自動終了（リスナーを毎回セット）
+  onInputHandler = () => {
+    if(inputEl.value.length >= prompt.length){
+      clearInterval(timerInterval);
+      finishTest(prompt);
     }
+  };
+  inputEl.addEventListener('input', onInputHandler);
+}
 
-    function getCorrectCharCount(prompt, typed){
-      let count = 0;
-      const len = Math.min(prompt.length, typed.length);
-      for(let i=0;i<len;i++){
-        if(prompt[i] === typed[i]) count++;
-      }
-      return count;
-    }
+function finishTest(prompt){
+  inputEl.disabled = true;
+  timerEl.textContent = '終了';
+  countdownEl.textContent = '';
 
-    startBtn.addEventListener('click', ()=>{
-      startBtn.disabled = true;
-      startTest();
-    });
+  // リスナー解除
+  if(onInputHandler){
+    inputEl.removeEventListener('input', onInputHandler);
+    onInputHandler = null;
+  }
+
+  const typed = inputEl.value;
+  const correctChars = getCorrectCharCount(prompt, typed);
+  const elapsedSec = (Date.now() - startTime) / 1000;
+  const accuracy = prompt.length ? (correctChars / prompt.length * 100).toFixed(1) : 0;
+  const wpm = (elapsedSec > 0) ? ((correctChars / 5) / (elapsedSec / 60)).toFixed(1) : 0;
+
+  resultEl.innerHTML = `正確さ: ${accuracy}% | WPM: ${wpm}`;
+  startBtn.disabled = false;
+}
+
+function getCorrectCharCount(prompt, typed){
+  let count = 0;
+  const len = Math.min(prompt.length, typed.length);
+  for(let i=0;i<len;i++){
+    if(prompt[i] === typed[i]) count++;
+  }
+  return count;
+}
+
+startBtn.addEventListener('click', ()=>{
+  startBtn.disabled = true;
+  startTest();
+});
